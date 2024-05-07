@@ -29,8 +29,4 @@ app.use(cors());
 
 app.use(express.json());
 
-app.get('/', (req,res)=>{
-    res.status(200).send('Hello World');
-});
-
 app.use("/api/portfolio", portfolioRouter);
