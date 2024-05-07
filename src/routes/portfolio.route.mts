@@ -1,6 +1,7 @@
 import express from 'express';
-import {Intro, Project, Experience, Contact} from '../models/user.model.mjs'
+import {Intro, Project, Experience, Contact, Skill} from '../models/user.model.mjs'
 import { User } from '../models/admin.model.mjs';
+import exp from 'constants';
 
 const router = express.Router();
 
@@ -10,12 +11,14 @@ router.get('/get-portfolio-data', async(req, res) => {
         const Projects = await Project.find();
         const Experiences = await Experience.find();
         const Contacts = await Contact.find();
+        const Skills = await Skill.find();
         
         res.status(200).send({
             intro: Intros,
             project: Projects,
             experience: Experiences,
-            contact: Contacts
+            contact: Contacts,
+            skill: Skills
         });
 
     } catch(error){
@@ -41,6 +44,55 @@ router.post("/update-intro", async(req, res) => {
         res.status(500).send({ success: false, message: "Internal server error" });
     }
 });
+
+router.post("/add-experience", async(req, res) => {
+    try {
+        const { ...updateData } = req.body;
+        const experience = new Experience(updateData);
+        await experience.save();
+        res.status(200).send({ data: experience, success: true, message: "Experience added successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ success: false, message: "Internal server error" });
+    }
+});
+
+router.post("/update-experience", async(req, res) => {
+    try {
+        const { _id, ...updateData } = req.body;
+        const experience = await Experience.findOneAndUpdate(
+            {_id: _id},
+            updateData,
+            {new: true}
+        ); 
+        if (!experience) {
+            return res.status(404).send({ success: false, message: "experience not found" });
+        }
+        res.status(200).send({ data: experience, success: true, message: "Experience updated successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ success: false, message: "Internal server error" });
+    }
+});
+
+router.post("/delete-experience", async(req, res) => {
+    try {
+        const { _id} = req.body;
+        const experience = await Experience.findOneAndDelete(
+            {_id: _id},
+            {new: true}
+        ); 
+        if (!experience) {
+            return res.status(404).send({ success: false, message: "Experience not found" });
+        }
+        res.status(200).send({ data: experience, success: true, message: "Experience Deleted successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ success: false, message: "Internal server error" });
+    }
+});
+
+
 
 router.post("/add-project", async(req, res) => {
     try {
@@ -75,7 +127,6 @@ router.post("/update-project", async(req, res) => {
 router.post("/delete-project", async(req, res) => {
     try {
         const { _id} = req.body;
-        console.log(req.body);
         const project = await Project.findOneAndDelete(
             {_id: _id},
             {new: true}
@@ -84,6 +135,35 @@ router.post("/delete-project", async(req, res) => {
             return res.status(404).send({ success: false, message: "Project not found" });
         }
         res.status(200).send({ data: project, success: true, message: "Project Deleted successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ success: false, message: "Internal server error" });
+    }
+});
+
+router.post("/add-skill", async(req, res) => {
+    try {
+        const { ...updateData } = req.body;
+        const skill = new Skill(updateData);
+        await skill.save();
+        res.status(200).send({ data: skill, success: true, message: "Skill added successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ success: false, message: "Internal server error" });
+    }
+});
+
+router.post("/delete-skill", async(req, res) => {
+    try {
+        const { _id} = req.body;
+        const skill = await Skill.findOneAndDelete(
+            {_id: _id},
+            {new: true}
+        ); 
+        if (!skill) {
+            return res.status(404).send({ success: false, message: "Skill not found" });
+        }
+        res.status(200).send({ data: skill, success: true, message: "Skill Deleted successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).send({ success: false, message: "Internal server error" });
@@ -132,5 +212,7 @@ router.post("/admin-login", async(req, res) =>{
         res.status(500).send(error);
     }
 });
+
+
 
 export {router};

@@ -48,11 +48,11 @@ const experienceSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    start_date: {
+    date_start: {
         type: String,
         required: true
     },
-    end_date: {
+    date_end: {
         type: String,
         required: true
     },
@@ -75,9 +75,24 @@ const contactSchema = new mongoose.Schema({
         required: true
     }
 }, { collection: 'Contact' });
+const skillSchema = new mongoose.Schema({
+    Link: {
+        type: String,
+        required: true,
+    },
+    Tab: {
+        type: String,
+        required: true,
+    },
+    File: {
+        type: String,
+        required: true,
+    }
+}, { collection: 'Skill' });
 const Intro = mongoose.model("Intro", introSchema);
 const Project = mongoose.model("Project", projectsSchema);
 const Experience = mongoose.model("Experience", experienceSchema);
 const Contact = mongoose.model("Contact", contactSchema);
-export { Intro, Project, Experience, Contact };
+const Skill = mongoose.model("Skill", skillSchema);
+export { Intro, Project, Experience, Contact, Skill };
 //# sourceMappingURL=user.model.mjs.map
