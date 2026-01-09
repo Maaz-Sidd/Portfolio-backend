@@ -1,7 +1,9 @@
 import express from 'express';
 import { Intro, Project, Experience, Contact, Skill } from '../models/user.model.mjs';
 import { User } from '../models/admin.model.mjs';
+import { requireAuth } from '../middleware/auth.middleware.mjs';
 const router = express.Router();
+// Public route
 router.get('/get-portfolio-data', async (req, res) => {
     try {
         const Intros = await Intro.find();
@@ -22,6 +24,67 @@ router.get('/get-portfolio-data', async (req, res) => {
         res.status(500).send({ error: 'Internal server error' });
     }
 });
+// Login route
+router.post("/admin-login", async (req, res) => {
+    try {
+        const admin = await User.findOne({
+            username: req.body.username,
+            password: req.body.password
+        });
+        if (admin) {
+            // Create session with proper types
+            if (req.session) {
+                req.session.userId = admin._id.toString();
+                req.session.username = admin.username;
+            }
+            res.status(200).send({
+                data: admin.username,
+                success: true,
+                message: "login successful!"
+            });
+        }
+        else {
+            res.status(401).send({
+                data: null,
+                success: false,
+                message: "Invalid username or password"
+            });
+        }
+    }
+    catch (error) {
+        console.error('Login error:', error);
+        res.status(500).send({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+});
+// Logout route
+router.post("/admin-logout", (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            return res.status(500).send({
+                success: false,
+                message: "Could not log out"
+            });
+        }
+        res.clearCookie('connect.sid');
+        res.status(200).send({
+            success: true,
+            message: "Logged out successfully"
+        });
+    });
+});
+// Check authentication status
+router.get("/check-auth", requireAuth, (req, res) => {
+    res.status(200).send({
+        success: true,
+        authenticated: true,
+        username: req.session?.username
+    });
+});
+// Protect all routes below
+router.use(requireAuth);
 router.post("/update-intro", async (req, res) => {
     try {
         const { _id, ...updateData } = req.body;
@@ -154,31 +217,6 @@ router.post("/update-contact", async (req, res) => {
     catch (error) {
         console.error(error);
         res.status(500).send({ success: false, message: "Internal server error" });
-    }
-});
-router.post("/admin-login", async (req, res) => {
-    try {
-        const admin = await User.findOne({
-            username: req.body.username,
-            password: req.body.password
-        });
-        if (admin) {
-            res.status(200).send({
-                data: admin.username,
-                success: true,
-                message: "login successful!"
-            });
-        }
-        else {
-            res.status(500).send({
-                data: admin,
-                success: false,
-                message: "Invalid username or password"
-            });
-        }
-    }
-    catch (error) {
-        res.status(500).send(error);
     }
 });
 export { router };
