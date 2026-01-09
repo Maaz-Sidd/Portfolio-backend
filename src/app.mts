@@ -27,8 +27,8 @@ const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
     'https://maaz-portfolio-7e727.firebaseapp.com',
-    'https://maazsidd.ca/',
-    'https://maaz-portfolio-7e727.web.app/'
+    'https://maazsidd.ca',
+    'https://maaz-portfolio-7e727.web.app'
 ];
 
 // CORS configuration with dynamic origin checking
