@@ -5,6 +5,10 @@ import { router as portfolioRouter } from './routes/portfolio.route.mjs';
 import cors from 'cors';
 import session from 'express-session';
 dotenv.config();
+import dns from 'node:dns';
+if (process.env.NODE_ENV !== 'production') {
+    dns.setServers(['192.168.2.218', '1.1.1.1']);
+}
 const mongodb_uri = process.env.MONGODB_URI || '';
 const app = express();
 const PORT = 8000;
@@ -23,8 +27,8 @@ const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:3000',
     'https://maaz-portfolio-7e727.firebaseapp.com',
-    'https://maazsidd.ca/',
-    'https://maaz-portfolio-7e727.web.app/'
+    'https://maazsidd.ca',
+    'https://maaz-portfolio-7e727.web.app'
 ];
 // CORS configuration with dynamic origin checking
 app.use(cors({
@@ -60,6 +64,9 @@ app.use(session({
     name: 'sessionId' // Custom name to avoid conflicts
 }));
 app.use("/api/portfolio", portfolioRouter);
+app.get('/health', (req, res) => {
+    res.json({ strStatus: 'ok', dUptimeSeconds: process.uptime() });
+});
 app.listen(PORT, () => {
     console.log(`server is running on port ${PORT}`);
     console.log(`CORS enabled for origins: ${allowedOrigins.join(', ')}`);

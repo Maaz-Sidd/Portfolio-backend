@@ -7,6 +7,12 @@ import session from 'express-session';
 
 dotenv.config();
 
+import dns from 'node:dns';
+
+if (process.env.NODE_ENV !== 'production') {
+    dns.setServers(['192.168.2.218', '1.1.1.1']);
+}
+
 const mongodb_uri: string = process.env.MONGODB_URI || '';
 const app = express();
 const PORT = 8000;
@@ -70,8 +76,13 @@ app.use(session({
 
 app.use("/api/portfolio", portfolioRouter);
 
+app.get('/health', (req, res) => {
+    res.json({ strStatus: 'ok', dUptimeSeconds: process.uptime() });
+});
+
 app.listen(PORT, () => {
     console.log(`server is running on port ${PORT}`);
     console.log(`CORS enabled for origins: ${allowedOrigins.join(', ')}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });
+

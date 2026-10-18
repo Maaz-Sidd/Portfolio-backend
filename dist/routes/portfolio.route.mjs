@@ -2,22 +2,30 @@ import express from 'express';
 import { Intro, Project, Experience, Contact, Skill } from '../models/user.model.mjs';
 import { User } from '../models/admin.model.mjs';
 import { requireAuth } from '../middleware/auth.middleware.mjs';
+import { fnGetCached, fnInvalidateCache } from '../cache.mjs';
 const router = express.Router();
+const strPortfolioCacheKey = 'portfolio-data';
 // Public route
 router.get('/get-portfolio-data', async (req, res) => {
     try {
-        const Intros = await Intro.find();
-        const Projects = await Project.find();
-        const Experiences = await Experience.find();
-        const Contacts = await Contact.find();
-        const Skills = await Skill.find();
-        res.status(200).send({
-            intro: Intros,
-            project: Projects,
-            experience: Experiences,
-            contact: Contacts,
-            skill: Skills
+        const objPortfolio = await fnGetCached(strPortfolioCacheKey, async () => {
+            const [arrIntro, arrProject, arrExperience, arrContact, arrSkill] = await Promise.all([
+                Intro.find().lean().exec(),
+                Project.find().lean().exec(),
+                Experience.find().lean().exec(),
+                Contact.find().lean().exec(),
+                Skill.find().lean().exec(),
+            ]);
+            return {
+                intro: arrIntro,
+                project: arrProject,
+                experience: arrExperience,
+                contact: arrContact,
+                skill: arrSkill,
+            };
         });
+        res.set('Cache-Control', 'public, max-age=60');
+        res.status(200).send(objPortfolio);
     }
     catch (error) {
         console.error('Error fetching portfolio data:', error);
@@ -68,7 +76,7 @@ router.post("/admin-logout", (req, res) => {
                 message: "Could not log out"
             });
         }
-        res.clearCookie('connect.sid');
+        res.clearCookie('sessionId');
         res.status(200).send({
             success: true,
             message: "Logged out successfully"
@@ -85,6 +93,14 @@ router.get("/check-auth", requireAuth, (req, res) => {
 });
 // Protect all routes below
 router.use(requireAuth);
+router.use((req, res, next) => {
+    res.on('finish', () => {
+        if (res.statusCode < 400) {
+            fnInvalidateCache(strPortfolioCacheKey);
+        }
+    });
+    next();
+});
 router.post("/update-intro", async (req, res) => {
     try {
         const { _id, ...updateData } = req.body;
